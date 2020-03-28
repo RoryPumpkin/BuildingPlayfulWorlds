@@ -6,8 +6,10 @@ public class GameManager : MonoBehaviour
 {
     public Camera main;
     public Camera overview;
+    public GameObject ui;
 
     public GameObject player;
+    public bool exit = false;
 
     public Vector3 eyeFollow;
 
@@ -17,12 +19,18 @@ public class GameManager : MonoBehaviour
     {
         if (startWithMenu)
         {
+            Cursor.lockState = CursorLockMode.Confined;
+            ui.SetActive(false);
             player.SetActive(false);
             main.depth = 0;
             overview.depth = 1;
             main.gameObject.SetActive(false);
             paused = true;
             eyeFollow = overview.transform.position;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
         }
         
     }
@@ -32,20 +40,29 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.P) && startWithMenu)
         {
-            eyeFollow = main.transform.position;
-            main.gameObject.SetActive(true);
-            main.depth = 2;
-            overview.depth = 0;
-            overview.gameObject.SetActive(false);
-            main.depth = 1;
-
-            player.SetActive(true);
-
-            paused = false;
+            FirstPerson();
         }
         else
         {
             eyeFollow = main.transform.position;
         }
+    }
+
+    public static void FirstPerson()
+    {
+        GameManager gm = (GameManager)FindObjectOfType(typeof(GameManager));
+
+        gm.eyeFollow = gm.main.transform.position;
+        gm.main.gameObject.SetActive(true);
+        gm.main.depth = 2;
+        gm.overview.depth = 0;
+        gm.overview.gameObject.SetActive(false);
+        gm.main.depth = 1;
+
+        gm.player.SetActive(true);
+        gm.ui.SetActive(true);
+
+        Cursor.lockState = CursorLockMode.Locked;
+        gm.paused = false;
     }
 }

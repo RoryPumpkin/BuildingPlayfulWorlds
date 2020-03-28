@@ -43,7 +43,7 @@ public class BlockGrid : MonoBehaviour
         sc.so = scaleOffset;
 
         mesh = block.GetComponent<MeshRenderer>();
-        mesh.enabled = false;
+        //mesh.enabled = false;
 
         Vector3 scale = block.transform.localScale;
         
@@ -53,7 +53,7 @@ public class BlockGrid : MonoBehaviour
 
         //spawnPos = transform.position - new Vector3(((size_x * 0.5f) - 0.5f), ((size_y * 0.5f) - 0.5f), ((size_z * 0.5f) - 0.5f));
         //spawnPoint.transform.localScale = Vector3.one;
-        //spawnPoint.transform.localPosition = new Vector3(-0.5f, -0.5f, -0.5f);
+        spawnPoint.transform.localPosition = new Vector3(-0.5f + (1/size_x), 0, -0.5f + (1/size_z));
         spawnPos = spawnPoint.transform.position;
 
         for(int x = 0; x < size_x; x+=stepSize)

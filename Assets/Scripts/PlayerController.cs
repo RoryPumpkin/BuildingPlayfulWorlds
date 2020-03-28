@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
+    private GameManager gm;
+
     public enum States { pause, move, jump, fall}
     public States currentState;
 
@@ -24,6 +26,7 @@ public class PlayerController : MonoBehaviour
     public PhysicMaterial frictionMat;
 
     public float jumpVel;
+    public float plantJumpMultiplier;
     public float moveVel;
     public float maxSpeed;
     public float friction, frictionlessTime;
@@ -46,8 +49,8 @@ public class PlayerController : MonoBehaviour
     public float grabRange = 10, grabStrength = 4f, grabDownSize = 0.5f, grappleRange = 30, ropeGrabForce = 20f, throwForce = 80f;
     public LayerMask ground_layer;
 
-    //public Text groundText;
-    //public Text distanceToEyesText;
+    public Text groundText;
+    public Text distanceToEyesText;
     public float distanceToEyes;
 
     private bool ground, canJump, justJumped, isGrabbing, isGrappling, hold, startHold;
@@ -71,13 +74,14 @@ public class PlayerController : MonoBehaviour
     public Vector3 currentDirection, targetDirection;
 
     private Rigidbody grabbedObject;
+    private Vector3 saveScale;
 
     void Start()
     {
+        gm = (GameManager)FindObjectOfType(typeof(GameManager));
         rb = GetComponent<Rigidbody>();
         spawnPos = gameObject.transform.position;
         dragVec = dragPoint.transform.localPosition;
-        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
@@ -162,7 +166,7 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
-        //UIHandler();
+        UIHandler();
     }
 
     private void FixedUpdate()
@@ -231,6 +235,12 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(CanJumpDelay());
         }
+
+        //put this in a script so I can change it per plant (some will be explosive, others bouncy and others make you jump further)
+        if(collision.gameObject.tag == "plant" && justJumped)
+        {
+            rb.velocity = new Vector3(rb.velocity.x, jumpVel * plantJumpMultiplier, rb.velocity.z);
+        }
     }
 
     void getGroundNormal()
@@ -250,6 +260,16 @@ public class PlayerController : MonoBehaviour
         if (((1 << other.gameObject.layer) & ground_layer) != 0)
         {
             ground = true;
+        }
+
+        if (other.tag == "exit")
+        {
+            gm.exit = true;
+        }
+
+        if (other.gameObject.tag == "death")
+        {
+            Death();
         }
     }
 
@@ -288,7 +308,7 @@ public class PlayerController : MonoBehaviour
 
     void WallRun()
     {
-        if (Physics.Raycast(transform.position - Vector3.up * 1.20f, targetDirection, out wallCheck, wallCheckDist + 0.5f, ground_layer))
+        if (Physics.Raycast(transform.position - Vector3.up * 1.20f, targetDirection, out wallCheck, wallCheckDist + 0.5f, ground_layer) && wallCheck.collider.tag != "Object")
         {
             if (ground)
             {
@@ -321,6 +341,8 @@ public class PlayerController : MonoBehaviour
                 grabbedObject = grab.collider.attachedRigidbody;
 
                 //dragPoint.transform.position = grabbedObject.position;
+
+                saveScale = grabbedObject.transform.localScale;
                 grabbedObject.transform.localScale = Vector3.one * grabDownSize;
                 isGrabbing = true;
             }
@@ -337,38 +359,34 @@ public class PlayerController : MonoBehaviour
 
     void StartGrapple()
     {
-        if (Physics.Raycast(cam.position, cam.forward, out grab, 500, ground_layer))
+        if (Physics.Raycast(cam.position, cam.forward, out grab, grappleRange, ground_layer))
         {
             if (grab.collider.tag == "ground")
             {
-
                 grabbedObject = grab.collider.attachedRigidbody;
 
+                isGrappling = true;
 
+                swing = Instantiate(swingPoint, grab.point, Quaternion.Euler(0, 0, 0));
+
+                cj = swing.GetComponent<ConfigurableJoint>();
+                cj.connectedBody = rb;
+
+                limit = new SoftJointLimit();
+                limit.limit = (gameObject.transform.position - grab.point).magnitude;
+                cj.linearLimit = limit;
+
+                CreateRope((cam.position - cam.up) + cam.forward, swing.transform.position);
+
+                //startcoroutine RopeStartDelay, wait 0.6s and if afterwards you touch ground EndAllGrab()
+
+                /*
+                //Put the grapple in here if we want the entire object to be within range
                 if ((grabbedObject.transform.position - gameObject.transform.position).magnitude < grappleRange)
                 {
-                    isGrappling = true;
-
-                    swing = Instantiate(swingPoint, grab.point, Quaternion.Euler(0, 0, 0));
-
-                    cj = swing.GetComponent<ConfigurableJoint>();
-                    cj.connectedBody = rb;
-
-                    limit = new SoftJointLimit();
-                    limit.limit = (gameObject.transform.position - grab.point).magnitude;
-                    cj.linearLimit = limit;
-
-                    CreateRope((cam.position - cam.up) + cam.forward, swing.transform.position);
-
-                    //startcoroutine RopeStartDelay, wait 0.6s and if afterwards you touch ground EndAllGrab()
-
-
-                    //Debug.Log((grabbedObject.transform.position - transform.position).magnitude);
-                    if ((grabbedObject.transform.position - transform.position).magnitude < grappleRange)
-                    {
-                        //doesnt work because the blocks are one giant object right now
-                    }
+                    
                 }
+                */
             }
         }
     }
@@ -412,17 +430,14 @@ public class PlayerController : MonoBehaviour
     {
         if (isGrabbing)
         {
-            //Debug.Log("stop grab");
             dragPoint.transform.localPosition = dragVec;
-            grabbedObject.transform.localScale = Vector3.one;
+            grabbedObject.transform.localScale = saveScale;
             grabKey = 0;
             isGrabbing = false;
         }
 
         if (isGrappling)
         {
-            //Debug.Log("no grapple");
-
             isGrappling = false;
 
             if (cj != null)
@@ -442,18 +457,18 @@ public class PlayerController : MonoBehaviour
         spearScript sc = lastSpear.GetComponent<spearScript>();
         sc.thrown = true;
         sc.thrownRot = spearThrowTrans.rotation;
+        //sc.forwardStart = spearThrowTrans.TransformDirection(Vector3.up);
         sc.throwSpeed = spearThrowSpeed;
         sc = null;
     }
 
-    /*
     void UIHandler()
     {
         groundText.text = "speed: " + System.Math.Round(speed, 2);
         distanceToEyesText.text = "distance to eyes: " + System.Math.Round(distanceToEyes, 2);
 
     }
-    */
+
     void CheckInputs()
     {
         if (Input.GetKeyUp(KeyCode.Q))

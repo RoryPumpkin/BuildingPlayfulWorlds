@@ -6,6 +6,8 @@ public class billboardScript : MonoBehaviour
 {
     private GameManager gm;
 
+    public float interpolationAmount;
+
     private Vector3 follow;
 
     void Start()
@@ -17,7 +19,15 @@ public class billboardScript : MonoBehaviour
     void Update()
     {
         follow = gm.eyeFollow;
-        //transform.rotation = Quaternion.FromToRotation(new Vector3(0, -1f, 0), follow - transform.position);
-        transform.LookAt(follow, Vector3.up);
+
+        if (interpolationAmount != -1)
+        {
+            Quaternion lookOnLook = Quaternion.LookRotation(follow - transform.position);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookOnLook, Time.deltaTime * interpolationAmount);
+        }
+        else
+        {
+            transform.LookAt(follow, Vector3.up);
+        }
     }
 }

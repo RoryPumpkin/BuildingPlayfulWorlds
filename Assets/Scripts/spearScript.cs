@@ -8,10 +8,12 @@ public class spearScript : MonoBehaviour
     public float throwSpeed;
     public float forcePosY;
     public float particleDuration;
+    public float spearLength = 1.5f;
 
     public GameObject hitPoof;
     public GameObject markerCube;
     public GameObject rotPoint;
+    public GameObject rayPoint;
 
     public LayerMask ground_layer;
     public Transform rayCastPoint;
@@ -28,45 +30,53 @@ public class spearScript : MonoBehaviour
     void Start()
     {
         rb = gameObject.GetComponent<Rigidbody>();
-        rb.AddForce(transform.up * throwSpeed, ForceMode.VelocityChange);
-        gameObject.layer = 0;
+        if (!spawned)
+        {
+            rb.AddForce(transform.up * throwSpeed, ForceMode.VelocityChange);
+            //gameObject.layer = 0;
+        }
+        
     }
 
     void Update()
     {
         if (thrown)
         {
-            gameObject.transform.forward = Vector3.Slerp(-gameObject.transform.forward, rb.velocity.normalized, Time.deltaTime * 1f);
+            //gameObject.transform.forward = Vector3.Slerp(-gameObject.transform.forward, rb.velocity.normalized, Time.deltaTime * 0.3f);
         }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
+        
+
         if (collision.collider.tag == "ground" && thrown)
         {
             ContactPoint point = collision.GetContact(0);
 
             gameObject.layer = 8;
 
-            if (Physics.Raycast(gameObject.transform.position, collision.gameObject.transform.position - gameObject.transform.position, out hit, 2f, ground_layer))
+            if (Physics.Raycast(rayPoint.transform.position, point.point - rayPoint.transform.position, out hit, 10f, ground_layer))
             {
+                Debug.DrawLine(rayPoint.transform.position, point.point, Color.green, Mathf.Infinity);
                 normal = hit.normal;
-                //Debug.Log(normal);
-                //Debug.Log(collision.gameObject.name);
+            } else
+            {
+                Debug.DrawLine(rayPoint.transform.position, point.point, Color.red, Mathf.Infinity);
+                Debug.Log("spear ray didn't find a collider from " + rayPoint.transform.position + " to " + point.point + " with " + 10f + " as distance");
             }
 
-
-            GameObject rot = Instantiate(rotPoint, point.point, thrownRot);
+            GameObject rot = Instantiate(rotPoint, point.point, Quaternion.Euler(Vector3.zero));
             GameObject poof = Instantiate(hitPoof, point.point, thrownRot);
 
             gameObject.transform.parent = poof.transform.parent = rot.transform;
-            gameObject.transform.localPosition = new Vector3(0, -1.5f, 0);
+            gameObject.transform.localPosition = new Vector3(0, -spearLength, 0);
             poof.transform.localPosition = new Vector3(0, -1f, 0);
             poof.transform.localRotation = Quaternion.Euler(-90, 0, 0);
             gameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
 
             rb.constraints = RigidbodyConstraints.FreezeAll;
-            rot.transform.rotation = Quaternion.FromToRotation(Vector3.right, normal);
+            rot.transform.rotation = Quaternion.FromToRotation(-Vector3.up, normal);
             rot.transform.rotation = Quaternion.Euler( 0, rot.transform.rotation.eulerAngles.y, rot.transform.rotation.eulerAngles.z);
 
             rot.transform.parent = collision.gameObject.transform;
