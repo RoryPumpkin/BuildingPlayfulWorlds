@@ -10,6 +10,9 @@ public class PlantShapeBehaviour : MonoBehaviour
     private SkinnedMeshRenderer smr;
     private Renderer r;
     private BoxCollider bc;
+    private AudioSource audioExplosion, audioCrackle;
+    private bool activated;
+    public bool visible;
 
     public float shrinkStep;
     public float growStep;
@@ -18,6 +21,9 @@ public class PlantShapeBehaviour : MonoBehaviour
     public float spreadTop = 90;
     public float spreadBottom = 100;
 
+    public float plantJumpMultiplier = 1.3f;
+    public float explosionForce = 500, explosionRadius = 10;
+
     public float dotTransparency;
     
     void Start()
@@ -25,6 +31,8 @@ public class PlantShapeBehaviour : MonoBehaviour
         smr = gameObject.GetComponent<SkinnedMeshRenderer>();
         r = gameObject.GetComponent<Renderer>();
         bc = gameObject.GetComponent<BoxCollider>();
+        audioExplosion = gameObject.GetComponents<AudioSource>()[0];
+        audioCrackle = gameObject.GetComponents<AudioSource>()[1];
     }
 
     
@@ -55,6 +63,12 @@ public class PlantShapeBehaviour : MonoBehaviour
             {
                 dotTransparency += 0.1f;
             }
+
+            if (r.material.color.a < 3 && grow > 50 && type == States.explosive)
+            {
+                r.material.color = new Color(r.material.color.r, r.material.color.g, r.material.color.b, r.material.color.a + (Time.deltaTime * 5));
+            }
+            
         }
         else
         {
@@ -64,9 +78,10 @@ public class PlantShapeBehaviour : MonoBehaviour
             }
         }
 
-        if (spreadTop > 60)
+        if (spreadTop > 60 && grow > 50)
         {
             bc.enabled = true;
+            activated = false;
         }
 
         smr.SetBlendShapeWeight(0, grow);
@@ -114,15 +129,42 @@ public class PlantShapeBehaviour : MonoBehaviour
 
     private void OnBecameVisible()
     {
-        //Debug.Log("you can see me");
+        visible = true;
     }
 
     private void OnBecameInvisible()
     {
+        visible = false;
+
+        if (spreadTop > 80 && grow > 50)
+        {
+            audioExplosion.Play();
+            activated = true;
+        }
+
+        r.material.color = new Color(r.material.color.r, r.material.color.g, r.material.color.b, 0f);
+
         grow = 0;
-        //spreadBottom = 0;
         spreadTop = 80;
         dotTransparency = 0;
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (!visible && type == States.explosive && other.gameObject.tag == "Player" && activated)
+        {
+            Rigidbody temp_rb = other.gameObject.GetComponent<Rigidbody>();
+            temp_rb.AddExplosionForce(explosionRadius, gameObject.transform.position, explosionRadius);
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if(collision.gameObject.tag == "Player" && collision.gameObject.GetComponent<PlayerController>().justJumped && type == States.jumpy)
+        {
+            Rigidbody temp_rb = collision.gameObject.GetComponent<Rigidbody>();
+            temp_rb.velocity = new Vector3(temp_rb.velocity.x, temp_rb.velocity.y * plantJumpMultiplier, temp_rb.velocity.z);
+        }
     }
 
     /* old method that works weirdly cause there is no will not render equivalent

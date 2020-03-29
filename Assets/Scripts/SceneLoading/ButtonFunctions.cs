@@ -1,22 +1,53 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class ButtonFunctions : MonoBehaviour
 {
-    public enum Scene
+    private GameManager gm;
+    public Slider slider;
+
+
+    private void Start()
     {
-        level1, Playground
+        gm = (GameManager)FindObjectOfType(typeof(GameManager));
     }
 
-    public void SwitchToPlayground()
+    public void Play()
     {
-        Debug.Log("Now Switchin...");
-        Loader.Load(Loader.Scene.Playground);
+        if (GameManager.nextLevel)
+        {
+            int val = SceneManager.GetActiveScene().buildIndex + 1;
+            if(val == 4)
+            {
+                val = 0;
+            }
+            Loader.nextScene = (Loader.Scene)val;
+            Loader.Load(Loader.nextScene);
+            GameManager.nextLevel = false;
+        }
 
-        GameManager.FirstPerson();
-        Debug.Log("Now Switchin... but its after loading");
+        gm.FirstPerson();
     }
 
-    
+    public void Restart()
+    {
+        gm.Respawn();
+        gm.FirstPerson();
+        //int val = SceneManager.GetActiveScene().buildIndex;
+        //Loader.nextScene = (Loader.Scene)val;
+        //Loader.Load(Loader.nextScene);
+    }
+
+    public void doExitGame()
+    {
+        Application.Quit();
+    }
+
+    public void ChangeSensitivity()
+    {
+        gm.pc.sensitivity_x = gm.pc.sensitivity_y = slider.value * 200;
+    }
 }

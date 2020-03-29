@@ -7,16 +7,20 @@ public class PlayerController : MonoBehaviour
 {
     private GameManager gm;
 
-    public enum States { pause, move, jump, fall}
-    public States currentState;
+    public enum States { pause, control }
+    public static States currentState;
 
     private float rightKey, leftKey, upKey, downKey, jumpKey, crouchKey, action1Key;
     private float grabKey;
 
+    private AudioSource audioJump, audioDeath;
+
+    public GameObject eye;
     public Transform cam;
     public GameObject dragPoint;
     private Vector3 dragVec;
     public GameObject swingPoint;
+    public GameObject confetti;
 
     public GameObject rope;
 
@@ -46,24 +50,36 @@ public class PlayerController : MonoBehaviour
     public float canJumpDelay = 0.4f;
 
     public float spearThrowSpeed;
-    public float grabRange = 10, grabStrength = 4f, grabDownSize = 0.5f, grappleRange = 30, ropeGrabForce = 20f, throwForce = 80f;
+    public float grabRange = 10, grabStrength = 4f, grabDownSize = 0.5f, grappleRange = 30, minGrappleDistance = 7, ropeGrabForce = 20f, throwForce = 80f;
+    public float duckHeight = 0.3f, crouchSmoothStepSpeed = 10;
+    public float crouchColliderSizeY = 1.3f, crouchTriggerSizeY = 1.3f;
     public LayerMask ground_layer;
 
-    public Text groundText;
-    public Text distanceToEyesText;
-    public float distanceToEyes;
-
-    private bool ground, canJump, justJumped, isGrabbing, isGrappling, hold, startHold;
+    private bool ground, canJump, isGrabbing, isGrappling, hold, startHold;
+    [HideInInspector]
+    public bool justJumped;
 
     public bool canGrab = true;
+    private bool isFirstUpdate = true;
     private float velX, velY, velZ;
     [HideInInspector]
     public float speed, distance;
 
     private RaycastHit groundHit, grab, wallCheck;
-    private Vector3 groundNormal, slingPoint, pointVel, spawnPos;
+    private Vector3 groundNormal, slingPoint, pointVel;
+
+    public static Vector3 spawnPos;
+    public static Quaternion spawnRot;
+
     private float mouseHorizontal;
     private Rigidbody rb;
+    private BoxCollider bc;
+    private BoxCollider bct;
+    public float colliderSizeY, triggerSizeY;
+    private MeshRenderer mesh;
+    private Vector3 mScale, mPos;
+    public CameraController cc;
+    private float camHeight;
     private ConfigurableJoint cj;
     private SoftJointLimit limit;
     private GameObject ropeInstance;
@@ -76,16 +92,80 @@ public class PlayerController : MonoBehaviour
     private Rigidbody grabbedObject;
     private Vector3 saveScale;
 
+    private Vector3 vel;
+    private bool unpause;
+
     void Start()
     {
+        audioJump = GetComponents<AudioSource>()[0];
+        audioDeath = GetComponents<AudioSource>()[1];
         gm = (GameManager)FindObjectOfType(typeof(GameManager));
         rb = GetComponent<Rigidbody>();
+        bc = GetComponents<BoxCollider>()[0];
+        colliderSizeY = bc.size.y;
+        bct = GetComponents<BoxCollider>()[1];
+        triggerSizeY = bct.size.y;
+        //cc = GetComponentInChildren<CameraController>();
+        mesh = GetComponentsInChildren<MeshRenderer>()[0];
+        mScale = mesh.transform.localScale;
+        mPos = mesh.transform.localPosition;
+        camHeight = cc.cameraHeight;
         spawnPos = gameObject.transform.position;
+        spawnRot = gameObject.transform.rotation;
         dragVec = dragPoint.transform.localPosition;
     }
 
     void Update()
     {
+        if(!GameManager.paused)
+        {
+            if (unpause)
+            {
+                rb.isKinematic = false;
+                rb.velocity = vel;
+                unpause = false;
+            }
+            
+            NormalActions();
+        }
+        
+    }
+
+    public void Pause()
+    {
+        vel = rb.velocity;
+        rb.isKinematic = true;
+        unpause = true;
+    }
+
+    void NormalActions()
+    {
+        if (ground)
+        {
+            bc.material.dynamicFriction = friction;
+        } else bc.material.dynamicFriction = 0f;
+
+        if (Input.GetKey(KeyCode.Z))
+        {
+            mesh.gameObject.transform.localScale = new Vector3(mesh.transform.localScale.x, (crouchColliderSizeY + 0.2f), mesh.transform.localScale.z);
+            mesh.gameObject.transform.localPosition = new Vector3(mesh.transform.localPosition.x, -(colliderSizeY - (crouchColliderSizeY + 0.2f)) * 0.5f, mesh.transform.localPosition.z);
+            bc.size = new Vector3(bc.size.x, crouchColliderSizeY, bc.size.z);
+            bc.center = new Vector3(bc.center.x, -(colliderSizeY - crouchColliderSizeY) * 0.5f, bc.center.z);
+            bct.size = new Vector3(bct.size.x, crouchColliderSizeY, bct.size.z);
+            bc.material.dynamicFriction = 0f;
+            cc.cameraHeight = Mathf.SmoothStep(cc.cameraHeight, duckHeight - 0.5f, Time.deltaTime * crouchSmoothStepSpeed);
+        }
+        else
+        {
+            mesh.gameObject.transform.localScale = mScale;
+            mesh.gameObject.transform.localPosition = mPos;
+            bc.size = new Vector3(bc.size.x, colliderSizeY, bc.size.z);
+            bc.center = new Vector3(bc.center.x, 0, bc.center.z);
+            bct.size = new Vector3(bct.size.x, triggerSizeY, bct.size.z);
+            bc.material.dynamicFriction = friction;
+            cc.cameraHeight = Mathf.SmoothStep(cc.cameraHeight, camHeight - 0.5f, Time.deltaTime * crouchSmoothStepSpeed);
+        }
+
         UpdateCameraHorizontal();
 
         getGroundNormal();
@@ -99,11 +179,9 @@ public class PlayerController : MonoBehaviour
         //check the values for all the buttons
         CheckInputs();
 
-        //throw the spear on Q press
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            ThrowSpear();
-        }
+        //When the player is holding a spear and pressed the leftmousebutton
+        //ThrowSpear();
+
 
         if (Input.GetMouseButtonUp(1) || !canGrab)
         {
@@ -143,7 +221,7 @@ public class PlayerController : MonoBehaviour
                 dragPoint.transform.position = spearThrowTrans.position;
                 grabbedObject.transform.localScale = Vector3.one;
             }
-            else if(Input.GetMouseButtonUp(0) && hold)
+            else if (Input.GetMouseButtonUp(0) && hold)
             {
                 Debug.Log("okay. stop.");
                 hold = false;
@@ -152,13 +230,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        
+
 
         //set velocity from right and left keys
         velX = rightKey - leftKey;
         velZ = upKey - downKey;
 
-        targetDirection = transform.TransformVector(velX , 0, velZ);
+        targetDirection = transform.TransformVector(velX, 0, velZ);
         targetDirection = Vector3.ProjectOnPlane(targetDirection, groundNormal);
 
         if (ground && Input.GetKeyDown(KeyCode.Space) || canJump && Input.GetKeyDown(KeyCode.Space))
@@ -166,7 +244,7 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
-        UIHandler();
+        //UIHandler();
     }
 
     private void FixedUpdate()
@@ -216,16 +294,18 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.tag == "ground")
         {
-            //StartCoroutine(FrictionlessTime());
+            StartCoroutine(FrictionlessTime());
             justJumped = false;
+            frictionMat.dynamicFriction = friction;
         }
 
         //if it is a moving ship or something add force to the player to move along here
 
         if (collision.gameObject.tag == "death")
         {
-            Death();
+            Respawn(true);
         }
+
     }
 
     private void OnCollisionExit(Collision collision)
@@ -234,6 +314,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.tag == "ground" && !justJumped || collision.gameObject.tag == "spear" && !justJumped)
         {
             StartCoroutine(CanJumpDelay());
+            frictionMat.dynamicFriction = 0f;
         }
 
         //put this in a script so I can change it per plant (some will be explosive, others bouncy and others make you jump further)
@@ -262,14 +343,9 @@ public class PlayerController : MonoBehaviour
             ground = true;
         }
 
-        if (other.tag == "exit")
-        {
-            gm.exit = true;
-        }
-
         if (other.gameObject.tag == "death")
         {
-            Death();
+            Respawn(true);
         }
     }
 
@@ -289,10 +365,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void Death()
+    public void Respawn(bool death)
     {
+        if (death)
+        {
+            audioDeath.Play();
+        }
+        eye.transform.position = eye.GetComponent<SimpleFollowScript>().spawnPos;
+
+        EndAllGrab();
         gameObject.transform.position = spawnPos;
-        gameObject.transform.localRotation = Quaternion.Euler(Vector3.zero);
+        gameObject.transform.rotation = spawnRot;
+
+        GameManager.startTime = Time.time;
 
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -300,6 +385,7 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
+        audioJump.Play();
         rb.velocity = new Vector3(rb.velocity.x, jumpVel, rb.velocity.z);
         canJump = false;
         justJumped = true;
@@ -361,7 +447,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Physics.Raycast(cam.position, cam.forward, out grab, grappleRange, ground_layer))
         {
-            if (grab.collider.tag == "ground")
+            if (grab.collider.tag == "ground" && grab.distance > minGrappleDistance)
             {
                 grabbedObject = grab.collider.attachedRigidbody;
 
@@ -462,12 +548,14 @@ public class PlayerController : MonoBehaviour
         sc = null;
     }
 
+    /*
     void UIHandler()
     {
         groundText.text = "speed: " + System.Math.Round(speed, 2);
         distanceToEyesText.text = "distance to eyes: " + System.Math.Round(distanceToEyes, 2);
 
     }
+    */
 
     void CheckInputs()
     {
@@ -596,5 +684,10 @@ public class PlayerController : MonoBehaviour
         frictionMat.dynamicFriction = 0f;
         yield return new WaitForSeconds(frictionlessTime);
         frictionMat.dynamicFriction = friction;
+    }
+
+    public void Confetti()
+    {
+        confetti.GetComponent<ParticleSystem>().Play();
     }
 }

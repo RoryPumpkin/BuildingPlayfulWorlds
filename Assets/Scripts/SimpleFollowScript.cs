@@ -11,39 +11,50 @@ public class SimpleFollowScript : MonoBehaviour
 
     private PlayerController pc;
     private Rigidbody rb;
-    private ParticleSystem ps;
-    private Vector3 spawnPos;
-    private float dist;
-    private bool paused;
+    public Vector3 spawnPos;
+    private Vector3 vel;
+    private bool unpause;
 
     void Start()
     {
         rb = gameObject.GetComponent<Rigidbody>();
         pc = player.gameObject.GetComponent<PlayerController>();
-        ps = gameObject.GetComponent<ParticleSystem>();
         spawnPos = gameObject.transform.position;
-        gm = (GameManager)FindObjectOfType(typeof(GameManager));
     }
 
     void Update()
     {
-        paused = gm.paused;
-
-        if (!paused)
+        if (!GameManager.paused)
         {
-            rb.AddForce((player.position - gameObject.transform.position).normalized * Time.deltaTime * followSpeed);
-            dist = (player.position - gameObject.transform.position).magnitude;
-
-            pc.distanceToEyes = dist;
-
-            if (dist < 2)
+            if (unpause)
             {
-                pc.Death();
-
-                gameObject.transform.position = spawnPos;
-                ps.Stop();
-                ps.Play();
+                rb.isKinematic = false;
+                rb.velocity = vel;
+                unpause = false;
             }
+
+            Debug.Log(rb.isKinematic);
+            rb.AddForce((player.position - gameObject.transform.position).normalized * Time.deltaTime * followSpeed);
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == "Player")
+        {
+            pc.Respawn(true);
+
+            gameObject.transform.position = spawnPos;
+        }
+    }
+    public void Pause()
+    {
+        if(rb != null)
+        {
+            vel = rb.velocity;
+            rb.isKinematic = true;
+            Debug.Log(rb.isKinematic);
+            unpause = true;
         }
     }
 }

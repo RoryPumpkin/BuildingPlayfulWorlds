@@ -11,6 +11,8 @@ TagManager:
   - jumpPad
   - spear
   - death
+  - plant
+  - exit
   layers:
   - Default
   - TransparentFX
@@ -22,8 +24,8 @@ TagManager:
   - 
   - GroundLayer
   - noCollidePlayer
-  - 
-  - 
+  - FirstPersonPostProcessing
+  - MenuPostProcessing
   - 
   - 
   - 

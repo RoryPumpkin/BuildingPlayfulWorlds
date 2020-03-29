@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class DoorScript : MonoBehaviour
 {
-    
+    private GameManager gm;
+    public static bool called;
 
     void Start()
     {
-        
+        gm = (GameManager)FindObjectOfType(typeof(GameManager));
     }
 
     void Update()
@@ -18,9 +19,11 @@ public class DoorScript : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag == "Player")
+        if(other.gameObject.tag == "Player" && !called)
         {
-            Loader.Load(Loader.Scene.Playground);
+            called = true;
+            gm.LevelEnd();
+            //Loader.Load(Loader.Scene.level1);
         }
     }
 }

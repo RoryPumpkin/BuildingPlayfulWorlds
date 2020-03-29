@@ -8,8 +8,10 @@ public static class Loader
 {
     public enum Scene
     {
-        level1, Playground, Loading,
+        level1, level2, level3, level4, level5, Loading,
     }
+
+    public static Scene nextScene;
 
     private static Action onLoaderCallback;
 

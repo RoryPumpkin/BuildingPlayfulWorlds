@@ -53,7 +53,27 @@ public class BlockGrid : MonoBehaviour
 
         //spawnPos = transform.position - new Vector3(((size_x * 0.5f) - 0.5f), ((size_y * 0.5f) - 0.5f), ((size_z * 0.5f) - 0.5f));
         //spawnPoint.transform.localScale = Vector3.one;
-        spawnPoint.transform.localPosition = new Vector3(-0.5f + (1/size_x), 0, -0.5f + (1/size_z));
+        float xo, yo, zo;
+
+        if (size_x == 1)
+        {
+            xo = 0;
+        }
+        else xo = -0.5f + (1 / size_x);
+
+        if (size_y == 1)
+        {
+            yo = 0;
+        }
+        else yo = -0.5f + (1 / size_y); ;
+        
+        if (size_z == 1)
+        {
+            zo = 0;
+        }
+        else zo = -0.5f + (1 / size_z);
+
+        spawnPoint.transform.localPosition = new Vector3(xo, yo, zo);
         spawnPos = spawnPoint.transform.position;
 
         for(int x = 0; x < size_x; x+=stepSize)

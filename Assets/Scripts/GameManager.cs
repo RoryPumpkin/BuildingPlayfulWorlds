@@ -1,68 +1,151 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public Camera main;
-    public Camera overview;
+    
     public GameObject ui;
+    public GameObject menu;
+    public TextMeshProUGUI endTime;
+    public TextMeshProUGUI timer;
+    public GameObject record;
 
+    public GameObject eye;
     public GameObject player;
-    public bool exit = false;
+    public GameObject door;
+    public Camera cam;
+    public static Vector3 midPoint;
+    private CameraController cc;
+    public PlayerController pc;
+    public static bool exit = false;
+    public static bool nextLevel;
+    public static float startTime;
+    private float lastFastestTime;
+    public static float completionTime;
+
+    private AudioSource confetti, ding;
 
     public Vector3 eyeFollow;
 
-    public bool paused, startWithMenu = true;
+    public bool startMenu;
+    public static bool paused;
+    public static bool pauseFrame, unPauseFrame;
+    public static bool endMenu;
 
     void Start()
     {
-        if (startWithMenu)
+        confetti = GetComponents<AudioSource>()[1];
+        ding = GetComponents<AudioSource>()[2];
+
+        pc = player.GetComponent<PlayerController>();
+        cc = cam.transform.parent.GetComponent<CameraController>();
+
+        startTime = Time.time;
+        endTime.gameObject.transform.parent.gameObject.SetActive(false);
+        exit = false;
+
+        if (startMenu)
         {
-            Cursor.lockState = CursorLockMode.Confined;
-            ui.SetActive(false);
-            player.SetActive(false);
-            main.depth = 0;
-            overview.depth = 1;
-            main.gameObject.SetActive(false);
-            paused = true;
-            eyeFollow = overview.transform.position;
+            Pause();
         }
         else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-        
-    }
-
-    
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.P) && startWithMenu)
         {
             FirstPerson();
         }
+    }
+
+
+    void Update()
+    {
+        eyeFollow = player.transform.position;
+
+        if (paused)
+        {
+            
+        }
         else
         {
-            eyeFollow = main.transform.position;
+            timer.text = (Time.time - startTime).ToString();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (paused)
+            {
+                FirstPerson();
+            }
+            else
+            {
+                Pause();
+            }
         }
     }
 
-    public static void FirstPerson()
+    public void LevelEnd()
     {
-        GameManager gm = (GameManager)FindObjectOfType(typeof(GameManager));
+        nextLevel = true;
+        completionTime = Time.time - startTime;
+        float endtime = completionTime;
+        endMenu = true;
+        ui.SetActive(false);
+        menu.SetActive(true);
+        endTime.text = endtime.ToString();
+        endTime.gameObject.transform.parent.gameObject.SetActive(true);
 
-        gm.eyeFollow = gm.main.transform.position;
-        gm.main.gameObject.SetActive(true);
-        gm.main.depth = 2;
-        gm.overview.depth = 0;
-        gm.overview.gameObject.SetActive(false);
-        gm.main.depth = 1;
+        Debug.Log(lastFastestTime + " previous fastest");
 
-        gm.player.SetActive(true);
-        gm.ui.SetActive(true);
+        if (lastFastestTime > endtime && lastFastestTime != 0)
+        {
+            record.SetActive(true);
+            pc.Confetti();
+            confetti.Play();
+            Debug.Log("record!! " + endtime);
+        }
+        else
+        {
+            ding.Play();
+        }
 
-        Cursor.lockState = CursorLockMode.Locked;
-        gm.paused = false;
+        lastFastestTime = endtime;
+
+        CameraController.overview = true;
+        CameraController.switchedView = true;
+        CameraController.overviewPos = cam.transform.position + cc.overviewOffset;
+        cc.transform.parent = null;
     }
+
+    public void Pause()
+    {
+        midPoint = player.transform.position + (door.transform.position - player.transform.position) * 0.5f;
+        startTime = Time.time;
+        ui.SetActive(false);
+        menu.SetActive(true);
+        record.SetActive(false);
+
+        CameraController.overview = true;
+        CameraController.switchedView = true;
+        CameraController.overviewPos = cam.transform.position + cc.overviewOffset;
+        cc.transform.parent = null;
+    }
+
+    public void FirstPerson()
+    {
+        menu.SetActive(false);
+        ui.SetActive(true);
+        endTime.gameObject.transform.parent.gameObject.SetActive(false);
+        record.SetActive(false);
+
+        CameraController.overview = false;
+        CameraController.switchedView = true;
+        cc.transform.parent = player.transform;
+    }
+
+    public void Respawn()
+    {
+        pc.Respawn(false);
+        eye.transform.position = eye.GetComponent<SimpleFollowScript>().spawnPos;
+    }
+
 }
