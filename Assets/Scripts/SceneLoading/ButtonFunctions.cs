@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
@@ -17,28 +15,28 @@ public class ButtonFunctions : MonoBehaviour
 
     public void Play()
     {
-        if (GameManager.nextLevel)
+        if (gm.nextLevel)
         {
+            
+            Debug.Log("You wanna play the next level?");
+
             int val = SceneManager.GetActiveScene().buildIndex + 1;
-            if(val == 4)
-            {
-                val = 0;
-            }
+
             Loader.nextScene = (Loader.Scene)val;
             Loader.Load(Loader.nextScene);
-            GameManager.nextLevel = false;
-        }
 
-        gm.FirstPerson();
+            gm.nextLevel = false;
+        }
+        else
+        {
+            gm.FirstPerson();
+        }
     }
 
     public void Restart()
     {
-        gm.Respawn();
-        gm.FirstPerson();
-        //int val = SceneManager.GetActiveScene().buildIndex;
-        //Loader.nextScene = (Loader.Scene)val;
-        //Loader.Load(Loader.nextScene);
+        gm.nextLevel = false;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void doExitGame()

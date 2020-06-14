@@ -1,19 +1,19 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
     private GameManager gm;
+    private GameObject persistentAudio;
 
     public enum States { pause, control }
     public static States currentState;
 
-    private float rightKey, leftKey, upKey, downKey, jumpKey, crouchKey, action1Key;
+    private float rightKey, leftKey, upKey, downKey; //jumpKey, crouchKey, action1Key;
     private float grabKey;
 
-    private AudioSource audioJump, audioDeath;
+    private AudioSource audioJump;
 
     public GameObject eye;
     public Transform cam;
@@ -60,8 +60,7 @@ public class PlayerController : MonoBehaviour
     public bool justJumped;
 
     public bool canGrab = true;
-    private bool isFirstUpdate = true;
-    private float velX, velY, velZ;
+    private float velX, velZ;
     [HideInInspector]
     public float speed, distance;
 
@@ -98,14 +97,12 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         audioJump = GetComponents<AudioSource>()[0];
-        audioDeath = GetComponents<AudioSource>()[1];
         gm = (GameManager)FindObjectOfType(typeof(GameManager));
         rb = GetComponent<Rigidbody>();
         bc = GetComponents<BoxCollider>()[0];
         colliderSizeY = bc.size.y;
         bct = GetComponents<BoxCollider>()[1];
         triggerSizeY = bct.size.y;
-        //cc = GetComponentInChildren<CameraController>();
         mesh = GetComponentsInChildren<MeshRenderer>()[0];
         mScale = mesh.transform.localScale;
         mPos = mesh.transform.localPosition;
@@ -113,6 +110,10 @@ public class PlayerController : MonoBehaviour
         spawnPos = gameObject.transform.position;
         spawnRot = gameObject.transform.rotation;
         dragVec = dragPoint.transform.localPosition;
+        Debug.Log(FindObjectOfType<PersistentAudioClass>().gameObject.name + " was found");
+        persistentAudio = FindObjectOfType<PersistentAudioClass>().gameObject;
+        DontDestroyOnLoad(persistentAudio);
+
     }
 
     void Update()
@@ -122,11 +123,16 @@ public class PlayerController : MonoBehaviour
             if (unpause)
             {
                 rb.isKinematic = false;
+                rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
                 rb.velocity = vel;
                 unpause = false;
             }
             
             NormalActions();
+        }
+        else
+        {
+            Pause();
         }
         
     }
@@ -134,7 +140,9 @@ public class PlayerController : MonoBehaviour
     public void Pause()
     {
         vel = rb.velocity;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         rb.isKinematic = true;
+        
         unpause = true;
     }
 
@@ -145,7 +153,7 @@ public class PlayerController : MonoBehaviour
             bc.material.dynamicFriction = friction;
         } else bc.material.dynamicFriction = 0f;
 
-        if (Input.GetKey(KeyCode.Z))
+        if (Input.GetButton("Crouch"))
         {
             mesh.gameObject.transform.localScale = new Vector3(mesh.transform.localScale.x, (crouchColliderSizeY + 0.2f), mesh.transform.localScale.z);
             mesh.gameObject.transform.localPosition = new Vector3(mesh.transform.localPosition.x, -(colliderSizeY - (crouchColliderSizeY + 0.2f)) * 0.5f, mesh.transform.localPosition.z);
@@ -365,22 +373,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     public void Respawn(bool death)
     {
+        
         if (death)
         {
-            audioDeath.Play();
+            persistentAudio.GetComponents<AudioSource>()[0].Play();
         }
-        eye.transform.position = eye.GetComponent<SimpleFollowScript>().spawnPos;
 
-        EndAllGrab();
-        gameObject.transform.position = spawnPos;
-        gameObject.transform.rotation = spawnRot;
-
-        GameManager.startTime = Time.time;
-
-        rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void Jump()
@@ -518,7 +520,7 @@ public class PlayerController : MonoBehaviour
         {
             dragPoint.transform.localPosition = dragVec;
             grabbedObject.transform.localScale = saveScale;
-            grabKey = 0;
+            //grabKey = 0;
             isGrabbing = false;
         }
 
@@ -559,11 +561,6 @@ public class PlayerController : MonoBehaviour
 
     void CheckInputs()
     {
-        if (Input.GetKeyUp(KeyCode.Q))
-        {
-            action1Key = 0;
-        }
-
         if (Input.GetKeyUp("right") || Input.GetKeyUp(KeyCode.D))
         {
             rightKey = 0;
@@ -580,22 +577,10 @@ public class PlayerController : MonoBehaviour
         {
             downKey = 0;
         }
-        if (Input.GetKeyUp(KeyCode.Space))
-        {
-            jumpKey = 0;
-        }
-        if (Input.GetKeyUp(KeyCode.LeftControl))
-        {
-            crouchKey = 1f;
-        }
+
         if (Input.GetMouseButtonDown(1))
         {
             grabKey = 0f;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            action1Key = 1;
         }
 
         if (Input.GetKeyDown("right") || Input.GetKeyDown(KeyCode.D))
@@ -614,16 +599,7 @@ public class PlayerController : MonoBehaviour
         {
             downKey = 1;
         }
-        /*
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            jumpKey = 1f;
-        }
-        if (Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            crouchKey = 1f;
-        }
-        */
+ 
         if (Input.GetMouseButtonDown(1))
         {
             grabKey = 1f;

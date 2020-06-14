@@ -13,6 +13,7 @@ TagManager:
   - death
   - plant
   - exit
+  - Audio
   layers:
   - Default
   - TransparentFX

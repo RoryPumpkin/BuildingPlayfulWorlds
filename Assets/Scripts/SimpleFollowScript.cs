@@ -1,13 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SimpleFollowScript : MonoBehaviour
 {
     public Transform player;
     public float followSpeed;
-
-    private GameManager gm;
 
     private PlayerController pc;
     private Rigidbody rb;
@@ -32,8 +28,6 @@ public class SimpleFollowScript : MonoBehaviour
                 rb.velocity = vel;
                 unpause = false;
             }
-
-            Debug.Log(rb.isKinematic);
             rb.AddForce((player.position - gameObject.transform.position).normalized * Time.deltaTime * followSpeed);
         }
     }
@@ -53,7 +47,6 @@ public class SimpleFollowScript : MonoBehaviour
         {
             vel = rb.velocity;
             rb.isKinematic = true;
-            Debug.Log(rb.isKinematic);
             unpause = true;
         }
     }

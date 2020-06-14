@@ -661,6 +661,7 @@ MonoBehaviour:
   spearThrowTrans: {fileID: 2739949347492998937}
   cameraHeight: 1.25
   script: {fileID: 2739949348275512286}
+  eye: {fileID: 0}
   overviewOffset: {x: 15, y: 2, z: -8}
 --- !u!1 &2739949346980371495
 GameObject:
@@ -960,6 +961,7 @@ GameObject:
   - component: {fileID: 3927566966314302433}
   - component: {fileID: 8064497714754919680}
   - component: {fileID: 570093900}
+  - component: {fileID: 570093906}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -993,7 +995,7 @@ Rigidbody:
   m_GameObject: {fileID: 2739949348275512277}
   serializedVersion: 2
   m_Mass: 1
-  m_Drag: 0
+  m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
   m_IsKinematic: 0
@@ -1012,19 +1014,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eab347e71cb21ee47b7aad57dd353329, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  eye: {fileID: 0}
   cam: {fileID: 2739949346936505633}
   dragPoint: {fileID: 2739949347767402053}
   swingPoint: {fileID: 8730056888594979666, guid: 9145d2721968e8342a973e50084b5123,
     type: 3}
+  confetti: {fileID: 8157679521126620323}
   rope: {fileID: 7392835094508201047, guid: 702d4d31d52689e4193ad251d977bac9, type: 3}
   spear: {fileID: 1201179837570323456, guid: 654d009c5896d4a41aae6d7b55d83705, type: 3}
   spearThrowTrans: {fileID: 2739949347492998937}
   frictionMat: {fileID: 13400000, guid: 6ee25c9e65a4c484092e7fc6e8c4daa7, type: 2}
-  jumpVel: 7
+  jumpVel: 10
   plantJumpMultiplier: 1.1
-  moveVel: 20
+  moveVel: 30
   maxSpeed: 15
-  friction: 0.6
+  friction: 0.5
   frictionlessTime: 0.3
   sensitivity_x: 80
   sensitivity_y: 80
@@ -1039,7 +1043,7 @@ MonoBehaviour:
   grappleRange: 30
   minGrappleDistance: 7
   ropeGrabForce: 5
-  throwForce: 1500
+  throwForce: 5000
   duckHeight: 0.4
   crouchSmoothStepSpeed: 20
   crouchColliderSizeY: 1.3
@@ -1047,13 +1051,13 @@ MonoBehaviour:
   ground_layer:
     serializedVersion: 2
     m_Bits: 2304
-  distanceToEyes: 0
   justJumped: 0
   canGrab: 1
   speed: 0
   distance: 0
   colliderSizeY: 0
   triggerSizeY: 0
+  cc: {fileID: 2739949346936505646}
   currentDirection: {x: 0, y: 0, z: 0}
   targetDirection: {x: 0, y: 0, z: 0}
 --- !u!65 &3927566966314302433
@@ -1093,6 +1097,102 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: fefd1d8d747597948911e9d684e9c044, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &570093906
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2739949348275512277}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: f2a549ccbc0a6e447ab647af5c318568, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1376,7 +1476,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8157679521126620323}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -3.02, z: 2.56}
+  m_LocalPosition: {x: 0, y: -2.18, z: 2.56}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2739949346936505633}
@@ -1398,7 +1498,7 @@ ParticleSystem:
   ringBufferLoopRange: {x: 0, y: 1}
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   useRigidbodyForVelocity: 1
@@ -1517,8 +1617,8 @@ ParticleSystem:
         m_RotationOrder: 4
     startSpeed:
       serializedVersion: 2
-      minMaxState: 0
-      scalar: 14.49
+      minMaxState: 3
+      scalar: 50
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -2096,7 +2196,7 @@ ParticleSystem:
     sphericalDirectionAmount: 0
     randomPositionAmount: 0
     radius:
-      value: 1
+      value: 2.05
       mode: 0
       spread: 0
       speed:
@@ -2215,7 +2315,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 300
+      scalar: 500
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -2483,12 +2583,12 @@ ParticleSystem:
         m_RotationOrder: 4
     separateAxes: 0
   RotationModule:
-    enabled: 0
+    enabled: 1
     x:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
-      minScalar: 0
+      minScalar: 6.283185
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -2539,9 +2639,9 @@ ParticleSystem:
         m_RotationOrder: 4
     y:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
-      minScalar: 0
+      minScalar: 6.283185
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -2592,9 +2692,9 @@ ParticleSystem:
         m_RotationOrder: 4
     curve:
       serializedVersion: 2
-      minMaxState: 0
-      scalar: 0.7853982
-      minScalar: 0.7853982
+      minMaxState: 3
+      scalar: 0
+      minScalar: 6.283185
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -2643,7 +2743,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
-    separateAxes: 0
+    separateAxes: 1
   ColorModule:
     enabled: 0
     gradient:
@@ -6091,7 +6191,7 @@ ParticleSystemRenderer:
   m_SortingFudge: 0
   m_NormalDirection: 1
   m_ShadowBias: 0
-  m_RenderAlignment: 0
+  m_RenderAlignment: 2
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
   m_UseCustomVertexStreams: 0

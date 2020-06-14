@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
@@ -45,14 +43,16 @@ public class CameraController : MonoBehaviour
 
         if (switchedView)
         {
+            
+
             if (overview)
             {
                 if (eye != null)
                 {
                     eye.GetComponent<SimpleFollowScript>().Pause();
                 }
-                script.Pause();
                 GameManager.paused = true;
+                
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
                 PlayerController.currentState = PlayerController.States.pause;
@@ -71,7 +71,7 @@ public class CameraController : MonoBehaviour
                 if (GameManager.endMenu)
                 {
                     GameManager.endMenu = false;
-                    script.Respawn(false);
+                    //GameManager.paused = false;
                     if(eye != null)
                     {
                         eye.transform.position = eye.GetComponent<SimpleFollowScript>().spawnPos;
@@ -87,14 +87,16 @@ public class CameraController : MonoBehaviour
                     Cursor.lockState = CursorLockMode.Locked;
                     Cursor.visible = false;
                     PlayerController.currentState = PlayerController.States.control;
-                    transform.position = Vector3.Slerp(transform.position, player.transform.position + (Vector3.up * (cameraHeight - 0.5f)), Time.deltaTime * 50);
-                    if (transform.position == player.transform.position + (Vector3.up * (cameraHeight - 0.5f)))
+                    transform.position = Vector3.Slerp(transform.position, player.transform.position + (Vector3.up * (cameraHeight - 0.5f)), Time.deltaTime * 100);
+                    if (Vector3.Distance(transform.position, player.transform.position + (Vector3.up * (cameraHeight - 0.5f))) < 1f)
                     {
+                        transform.position = player.transform.position + (Vector3.up * (cameraHeight - 0.5f));
                         switchedView = false;
                     }
                 }
-
             }
         }
     }
+
+
 }

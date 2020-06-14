@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    
     public GameObject ui;
     public GameObject menu;
     public TextMeshProUGUI endTime;
     public TextMeshProUGUI timer;
+    public bool timerOn;
     public GameObject record;
 
     public GameObject eye;
@@ -20,25 +18,26 @@ public class GameManager : MonoBehaviour
     private CameraController cc;
     public PlayerController pc;
     public static bool exit = false;
-    public static bool nextLevel;
+    public bool nextLevel;
     public static float startTime;
     private float lastFastestTime;
     public static float completionTime;
 
     private AudioSource confetti, ding;
+    private LoaderCallback lc;
 
     public Vector3 eyeFollow;
 
-    public bool startMenu;
     public static bool paused;
-    public static bool pauseFrame, unPauseFrame;
+    public static bool pauseFrame;
     public static bool endMenu;
 
     void Start()
     {
         confetti = GetComponents<AudioSource>()[1];
         ding = GetComponents<AudioSource>()[2];
-
+        //lc = FindObjectOfType<LoaderCallback>();
+        //lc.
         pc = player.GetComponent<PlayerController>();
         cc = cam.transform.parent.GetComponent<CameraController>();
 
@@ -46,14 +45,12 @@ public class GameManager : MonoBehaviour
         endTime.gameObject.transform.parent.gameObject.SetActive(false);
         exit = false;
 
-        if (startMenu)
+        if (!timerOn)
         {
-            Pause();
+            timer.gameObject.transform.parent.gameObject.SetActive(false);
         }
-        else
-        {
-            FirstPerson();
-        }
+
+        Pause();
     }
 
 
@@ -67,7 +64,10 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            timer.text = (Time.time - startTime).ToString();
+            if (timerOn)
+            {
+                timer.text = (Time.time - startTime).ToString();
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -85,23 +85,23 @@ public class GameManager : MonoBehaviour
 
     public void LevelEnd()
     {
-        nextLevel = true;
         completionTime = Time.time - startTime;
         float endtime = completionTime;
         endMenu = true;
+        nextLevel = true;
         ui.SetActive(false);
         menu.SetActive(true);
         endTime.text = endtime.ToString();
         endTime.gameObject.transform.parent.gameObject.SetActive(true);
 
-        Debug.Log(lastFastestTime + " previous fastest");
+        //Debug.Log(lastFastestTime + " previous fastest");
 
-        if (lastFastestTime > endtime && lastFastestTime != 0)
+        if (lastFastestTime > endtime && lastFastestTime != 0 && timerOn)
         {
             record.SetActive(true);
             pc.Confetti();
             confetti.Play();
-            Debug.Log("record!! " + endtime);
+            //Debug.Log("record!! " + endtime);
         }
         else
         {
@@ -114,11 +114,14 @@ public class GameManager : MonoBehaviour
         CameraController.switchedView = true;
         CameraController.overviewPos = cam.transform.position + cc.overviewOffset;
         cc.transform.parent = null;
+        
     }
 
     public void Pause()
     {
-        midPoint = player.transform.position + (door.transform.position - player.transform.position) * 0.5f;
+        Debug.Log("Pause()");
+
+        midPoint = player.transform.position + (door.transform.position - player.transform.position) * 0.3f;
         startTime = Time.time;
         ui.SetActive(false);
         menu.SetActive(true);
@@ -132,6 +135,9 @@ public class GameManager : MonoBehaviour
 
     public void FirstPerson()
     {
+        Debug.Log("FirstPerson()");
+
+
         menu.SetActive(false);
         ui.SetActive(true);
         endTime.gameObject.transform.parent.gameObject.SetActive(false);
@@ -141,11 +147,4 @@ public class GameManager : MonoBehaviour
         CameraController.switchedView = true;
         cc.transform.parent = player.transform;
     }
-
-    public void Respawn()
-    {
-        pc.Respawn(false);
-        eye.transform.position = eye.GetComponent<SimpleFollowScript>().spawnPos;
-    }
-
 }

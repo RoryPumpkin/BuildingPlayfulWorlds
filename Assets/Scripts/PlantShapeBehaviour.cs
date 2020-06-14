@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlantShapeBehaviour : MonoBehaviour
 {
@@ -87,44 +85,6 @@ public class PlantShapeBehaviour : MonoBehaviour
         smr.SetBlendShapeWeight(0, grow);
         smr.SetBlendShapeWeight(1, spreadTop);
         smr.SetBlendShapeWeight(2, spreadBottom);
-
-
-        /* semi old method, I prefer just putting all the blendshapes to the zero state when you can't see it
-        if (r.isVisible)
-        {
-            if (grow < 100)
-            {
-                grow += growStep;
-            }
-
-            if(spreadTop < 100)
-            {
-                spreadTop += growStep;
-            }
-
-            if (spreadBottom < 100)
-            {
-                spreadBottom += growStep;
-            }
-        }
-        else
-        {
-            if (grow > 0)
-            {
-                grow -= shrinkStep;
-            }
-
-            if (spreadTop > 0)
-            {
-                spreadTop -= shrinkStep;
-            }
-
-            if (spreadBottom > 0)
-            {
-                spreadBottom -= shrinkStep;
-            }
-        }
-        */
     }
 
     private void OnBecameVisible()

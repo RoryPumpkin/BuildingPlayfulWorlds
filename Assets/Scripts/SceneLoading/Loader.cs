@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine;
 
 public static class Loader
 {
     public enum Scene
     {
-        level1, level2, level3, level4, level5, Loading,
+        level1, level2, level3, level4, level5, level6, level7, Thank, Loading
     }
 
     public static Scene nextScene;
@@ -20,7 +18,9 @@ public static class Loader
         //set the loader callback action to load the target scene
         onLoaderCallback = () =>
         {
-            SceneManager.LoadScene(scene.ToString());
+            {
+                SceneManager.LoadScene(scene.ToString());
+            }
         };
 
         //load the loading scene

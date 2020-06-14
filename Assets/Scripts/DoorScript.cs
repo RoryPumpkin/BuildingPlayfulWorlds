@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DoorScript : MonoBehaviour
 {
@@ -23,7 +21,6 @@ public class DoorScript : MonoBehaviour
         {
             called = true;
             gm.LevelEnd();
-            //Loader.Load(Loader.Scene.level1);
         }
     }
 }
